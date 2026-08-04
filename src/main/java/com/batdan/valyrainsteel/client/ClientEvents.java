@@ -2,9 +2,7 @@ package com.batdan.valyrainsteel.client;
 
 import com.batdan.valyrainsteel.Valyrainsteel;
 import com.batdan.valyrainsteel.client.key.KeyBindings;
-import com.batdan.valyrainsteel.client.renderer.CalamityRenderer;
-import com.batdan.valyrainsteel.client.renderer.CatspawDaggerRenderer;
-import com.batdan.valyrainsteel.client.particle.ModParticleFactories;
+import com.batdan.valyrainsteel.client.renderer.ThrownItemProjectileRenderer;
 import com.batdan.valyrainsteel.entity.ModEntities;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -34,13 +32,13 @@ public class ClientEvents {
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
 
         event.registerEntityRenderer(
-                ModEntities.CATSPAW_DAGGER.get(),
-                CatspawDaggerRenderer::new
+                ModEntities.CALAMITY.get(),
+                ThrownItemProjectileRenderer::new
         );
 
         event.registerEntityRenderer(
-                ModEntities.CALAMITY.get(),
-                CalamityRenderer::new
+                ModEntities.CATSPAW_DAGGER.get(),
+                ThrownItemProjectileRenderer::new
         );
     }
 }

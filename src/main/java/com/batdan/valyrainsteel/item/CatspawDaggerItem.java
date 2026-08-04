@@ -18,7 +18,7 @@ import java.util.List;
 
 public class CatspawDaggerItem extends LegendarySwordItem {
 
-    public static final int COOLDOWN = 60; // 3 seconds (20 ticks/sec)
+    public static final int COOLDOWN = 0;
 
     public CatspawDaggerItem(Tier tier, int attackDamage, float attackSpeed, Properties properties) {
         super(tier, attackDamage, attackSpeed, properties);
@@ -50,9 +50,6 @@ public class CatspawDaggerItem extends LegendarySwordItem {
             return;
 
         int charge = getUseDuration(stack) - timeLeft;
-
-        if (charge < 10)
-            return;
 
         float velocity = Math.min(charge / 20F, 1F) * 1.5F;
 

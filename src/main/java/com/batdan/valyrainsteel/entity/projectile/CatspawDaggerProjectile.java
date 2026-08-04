@@ -74,6 +74,21 @@ public class CatspawDaggerProjectile extends ThrowableItemProjectile {
 
         super.tick();
 
+        Vec3 velocity = getDeltaMovement();
+
+        if (velocity.lengthSqr() > 1.0E-7D) {
+
+            float yaw = (float)(Math.atan2(velocity.x, velocity.z) * Mth.RAD_TO_DEG);
+            float pitch = (float)(Math.atan2(
+                    velocity.y,
+                    Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z)
+            ) * Mth.RAD_TO_DEG);
+
+            setYRot(yaw);
+            setXRot(-pitch);
+        }
+
+
         // Rotate while flying
         if (!inGround) {
             //setYRot(getYRot() + 35F);
@@ -97,9 +112,9 @@ public class CatspawDaggerProjectile extends ThrowableItemProjectile {
         if (inGround) {
             groundTicks++;
 
-            //if (groundTicks >= 40) {
-                //discard();
-            //}
+            if (groundTicks >= 20 * 3) {
+                discard();
+            }
         }
     }
 
@@ -115,28 +130,5 @@ public class CatspawDaggerProjectile extends ThrowableItemProjectile {
 
     public boolean isInGround() {
         return inGround;
-    }
-
-    private void updateRotationFromVelocity() {
-
-        Vec3 velocity = getDeltaMovement();
-
-        if (velocity.lengthSqr() > 0.001D) {
-
-            double horizontal = Math.sqrt(
-                    velocity.x * velocity.x +
-                            velocity.z * velocity.z
-            );
-
-            setYRot((float)
-                    (Mth.atan2(velocity.x, velocity.z)
-                            * (180F / Math.PI))
-            );
-
-            setXRot((float)
-                    (Mth.atan2(velocity.y, horizontal)
-                            * (180F / Math.PI))
-            );
-        }
     }
 }

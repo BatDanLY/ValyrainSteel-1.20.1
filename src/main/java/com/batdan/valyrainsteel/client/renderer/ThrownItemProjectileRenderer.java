@@ -1,6 +1,5 @@
 package com.batdan.valyrainsteel.client.renderer;
 
-import com.batdan.valyrainsteel.entity.projectile.CatspawDaggerProjectile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -8,57 +7,53 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 
-public class CatspawDaggerRenderer extends EntityRenderer<CatspawDaggerProjectile> {
+public class ThrownItemProjectileRenderer<T extends ThrowableItemProjectile>
+        extends EntityRenderer<T> {
 
     private final ItemRenderer itemRenderer;
 
-    public CatspawDaggerRenderer(EntityRendererProvider.Context context) {
+    public ThrownItemProjectileRenderer(EntityRendererProvider.Context context) {
         super(context);
         this.itemRenderer = Minecraft.getInstance().getItemRenderer();
     }
 
     @Override
     public void render(
-            CatspawDaggerProjectile entity,
+            T entity,
             float entityYaw,
             float partialTicks,
             PoseStack poseStack,
             MultiBufferSource buffer,
             int packedLight
     ) {
-
         poseStack.pushPose();
 
-        // Move to centre
-        poseStack.translate(0D, 0.1D, 0D);
+        float yaw = Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
+        float pitch = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
 
-        poseStack.scale(0.75F, 0.75F, 0.75F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+        poseStack.mulPose(Axis.XP.rotationDegrees(pitch));
 
-        poseStack.mulPose(Axis.YP.rotationDegrees(entity.getYRot()));
-        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()*-1));
-
-        if (!entity.isInGround()) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(entity.tickCount * 30F));
+        if (!entity.onGround()) {
+            float spin = (entity.tickCount + partialTicks) * 40F;
+            poseStack.mulPose(Axis.XP.rotationDegrees(spin));
         }
-
-        // Face direction of travel
-
-
-        // Continuous spin
-
-
 
         itemRenderer.renderStatic(
                 entity.getItem(),
-                ItemDisplayContext.GROUND,
+                ItemDisplayContext.NONE,
                 packedLight,
                 net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
                 poseStack,
                 buffer,
                 entity.level(),
-                0
+                entity.getId()
         );
 
         poseStack.popPose();
@@ -67,7 +62,7 @@ public class CatspawDaggerRenderer extends EntityRenderer<CatspawDaggerProjectil
     }
 
     @Override
-    public net.minecraft.resources.ResourceLocation getTextureLocation(CatspawDaggerProjectile entity) {
-        return net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS;
+    public ResourceLocation getTextureLocation(T entity) {
+        return TextureAtlas.LOCATION_BLOCKS;
     }
 }

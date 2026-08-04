@@ -147,29 +147,6 @@ public class CalamityProjectile extends ThrowableItemProjectile {
         return NetworkHooks.getEntitySpawningPacket(this);
     }
 
-    private void updateRotationFromVelocity() {
-
-        Vec3 velocity = getDeltaMovement();
-
-        if (velocity.lengthSqr() > 0.001D) {
-
-            double horizontal = Math.sqrt(
-                    velocity.x * velocity.x +
-                            velocity.z * velocity.z
-            );
-
-            setYRot((float)
-                    (Mth.atan2(velocity.x, velocity.z)
-                            * (180F / Math.PI))
-            );
-
-            setXRot((float)
-                    (Mth.atan2(velocity.y, horizontal)
-                            * (180F / Math.PI))
-            );
-        }
-    }
-
     private void explode() {
 
         if(level().isClientSide)
