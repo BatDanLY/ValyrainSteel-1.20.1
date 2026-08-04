@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "valyrainsteel:item/castle_steel/castle_steel_plate_leggings"
+  }
+}

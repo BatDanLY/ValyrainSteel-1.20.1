@@ -1,0 +1,62 @@
+{
+  "creativetab.valyrainsteel.valyrian_steel_equipment_tab": "GOT Equipment",
+  "creativetab.valyrainsteel.valyrian_steel_materials_tab": "GOT Materials",
+
+
+
+
+  "item.valyrainsteel.valyrian_steel_ingot": "Valyrian Steel Ingot",
+  "item.valyrainsteel.castle_steel_ingot": "Steel Ingot",
+  "item.valyrainsteel.dragon_glass_shard": "Dragon Glass Shard",
+
+  "item.valyrainsteel.legendary_sword.passive": "Passive Ability:",
+  "item.valyrainsteel.legendary_sword.active": "Active Ability:",
+
+  "item.valyrainsteel.dark_sister": "Dark Sister",
+  "item.valyrainsteel.dark_sister.lore": "Forged slender for a warrior queen and wielded by a rogue prince, this dark steel thirsts for the blood of dragons.",
+  "item.valyrainsteel.dark_sister.active": "Holding down charges a fiery dash that launches the user forward and deals damage to enemies caught in the path",
+  "item.valyrainsteel.dark_sister.passive": "Every consecutive hit increases critical strike chance by 5%. (Max 50%) (Critical Strike 2x Damage)",
+
+  "item.valyrainsteel.blackfyre": "Blackfyre",
+
+  "item.valyrainsteel.catspaw_dagger": "Catspaw Dagger",
+  "item.valyrainsteel.catspaw_dagger.lore": "Forged in ancient Valyria and bathed in royal blood, this blade carries the prophecy of kings and the doom of winter.",
+  "item.valyrainsteel.catspaw_dagger.active": "Throw a spectral copy of the dagger.",
+  "item.valyrainsteel.catspaw_dagger.passive": "Attacks ignores 50% of enemies armour.",
+
+  "item.valyrainsteel.longclaw": "Longclaw",
+
+  "item.valyrainsteel.ice": "Ice",
+
+  "item.valyrainsteel.calamity": "Calamity",
+  "item.valyrainsteel.calamity.lore": "Forged in the Freehold before the Doom, Calamity was whispered to have split mountains and silenced forests beneath a sky of black thunder.",
+  "item.valyrainsteel.calamity.active": "Hurl the axe to unleash a storm of lightning where it lands.",
+  "item.valyrainsteel.calamity.passive": "Strike the base of a tree to fell it in a single blow.",
+
+  "item.valyrainsteel.Nightfall": "NightFall",
+
+  "item.valyrainsteel.Tribute": "Tribute Rapier",
+
+
+  "item.valyrainsteel.castle_steel_plate_helmet": "Castle Steel Helmet",
+  "item.valyrainsteel.castle_steel_plate_chestplate": "Castle Steel Chestplate",
+  "item.valyrainsteel.castle_steel_plate_leggings": "Castle Steel Leggings",
+  "item.valyrainsteel.castle_steel_plate_boots": "Castle Steel Boots",
+
+  "item.valyrainsteel.iron_plate_helmet": "Iron Plate Helmet",
+  "item.valyrainsteel.iron_plate_chestplate": "Iron Plate Chestplate",
+  "item.valyrainsteel.iron_plate_leggings": "Iron Plate Leggings",
+  "item.valyrainsteel.iron_plate_boots": "Iron Plate Boots",
+
+  "item.valyrainsteel.castle_steel_sword": "Castle Steel Sword",
+  "item.valyrainsteel.castle_steel_pickaxe": "Castle Steel Pickaxe",
+  "item.valyrainsteel.castle_steel_axe": "Castle Steel Axe",
+  "item.valyrainsteel.castle_steel_shovel": "Castle Steel Shovel",
+  "item.valyrainsteel.castle_steel_hoe": "Castle Steel Hoe",
+
+  "item.valyrainsteel.dragon_glass_sword": "Dragon Glass Sword",
+  "item.valyrainsteel.dragon_glass_pickaxe": "Dragon Glass Pickaxe",
+  "item.valyrainsteel.dragon_glass_axe": "Dragon Glass Axe",
+  "item.valyrainsteel.dragon_glass_shovel": "Dragon Glass Shovel",
+  "item.valyrainsteel.dragon_glass_hoe": "Dragon Glass Hoe"
+}
