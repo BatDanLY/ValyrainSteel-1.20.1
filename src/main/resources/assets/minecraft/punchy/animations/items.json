@@ -1,0 +1,22 @@
+{
+  "items": {
+    "valyrainsteel:dark_sister": {
+      "animation": "sword"
+    },
+    "valyrainsteel:lady_forlorn": {
+      "animation": "sword"
+    },
+    "valyrainsteel:ice": {
+      "animation": "sword"
+    },
+    "valyrainsteel:blackfyre": {
+      "animation": "sword"
+    },
+    "valyrainsteel:longclaw": {
+      "animation": "sword"
+    },
+    "valyrainsteel:calamity": {
+      "animation": "axe"
+    }
+  }
+}

@@ -3,6 +3,8 @@ package com.batdan.valyrainsteel;
 import com.batdan.valyrainsteel.item.ModCreativeModeTabs;
 import com.batdan.valyrainsteel.item.ModItems;
 import com.batdan.valyrainsteel.entity.ModEntities;
+import com.batdan.valyrainsteel.registry.ModEffects;
+import com.batdan.valyrainsteel.registry.ModSounds;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.common.MinecraftForge;
@@ -37,6 +39,8 @@ public class Valyrainsteel {
         ModItems.register(modEventBus);
         ModEntities.register(modEventBus);
         ModCreativeModeTabs.register(modEventBus);
+        ModSounds.SOUNDS.register(modEventBus);
+        ModEffects.EFFECTS.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);

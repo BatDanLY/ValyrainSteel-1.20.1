@@ -31,6 +31,7 @@ public class ModCreativeModeTabs {
                                 output.accept(ModItems.LONGCLAW.get());
                                 output.accept(ModItems.ICE.get());
                                 output.accept(ModItems.CALAMITY.get());
+                                output.accept(ModItems.LADY_FORLORN.get());
                                 output.accept(ModItems.NIGHTFALL.get());
                                 output.accept(ModItems.TRIBUTE.get());
 

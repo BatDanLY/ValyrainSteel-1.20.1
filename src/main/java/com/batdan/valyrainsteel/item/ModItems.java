@@ -26,35 +26,39 @@ public class ModItems {
 
     //Valyrian Steel Equipment
     public static final RegistryObject<Item> DARK_SISTER = ITEMS.register("dark_sister",
-            () -> new DarkSisterItem(ModTiers.VALYRIAN_STEEL, 5, -2.4f,
+            () -> new DarkSisterItem(ModTiers.VALYRIAN_STEEL, 5, -2f,
                     new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static final RegistryObject<Item> BlACKFYRE = ITEMS.register("blackfyre",
-            () -> new BlackfyreItem(ModTiers.VALYRIAN_STEEL, 8, -1F,
+            () -> new BlackfyreItem(ModTiers.VALYRIAN_STEEL, 8, -2.6F,
                     new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static final RegistryObject<Item> CATSPAW_DAGGER = ITEMS.register("catspaw_dagger",
-            () -> new CatspawDaggerItem(ModTiers.VALYRIAN_STEEL, 1, -1.7F,
+            () -> new CatspawDaggerItem(ModTiers.VALYRIAN_STEEL, 3, -1F,
                     new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static final RegistryObject<Item> LONGCLAW = ITEMS.register("longclaw",
-            () -> new LongclawItem(ModTiers.VALYRIAN_STEEL, 7, -1F,
+            () -> new LongclawItem(ModTiers.VALYRIAN_STEEL, 7, -2.4F,
                     new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static final RegistryObject<Item> ICE = ITEMS.register("ice",
-            () -> new IceItem(ModTiers.VALYRIAN_STEEL, 14, -1F,
+            () -> new IceItem(ModTiers.VALYRIAN_STEEL, 14, -3.6F,
                     new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static final RegistryObject<Item> CALAMITY = ITEMS.register("calamity",
-            () -> new CalamityItem(ModTiers.VALYRIAN_STEEL, 8, -1F,
+            () -> new CalamityItem(ModTiers.VALYRIAN_STEEL, 10, -3F,
                     new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static final RegistryObject<Item> NIGHTFALL = ITEMS.register("nightfall",
-            () -> new NightfallItem(ModTiers.VALYRIAN_STEEL, 8, -1F,
+            () -> new NightfallItem(ModTiers.VALYRIAN_STEEL, 8, -2.6F,
                     new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
 
     public static final RegistryObject<Item> TRIBUTE = ITEMS.register("tribute",
-            () -> new TributeItem(ModTiers.CASTLE_STEEL, 8, -1F,
+            () -> new TributeItem(ModTiers.CASTLE_STEEL, 4, -1.6F,
+                    new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
+
+    public static final RegistryObject<Item> LADY_FORLORN = ITEMS.register("lady_forlorn",
+            () -> new LadyForlornItem(ModTiers.VALYRIAN_STEEL, 7, -2.4F,
                     new Item.Properties().rarity(Rarity.EPIC).stacksTo(1)));
 
     //Valyrian Steel Armor

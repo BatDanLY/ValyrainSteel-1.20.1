@@ -18,9 +18,9 @@ import net.minecraftforge.network.PlayMessages;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
-public class CatspawDaggerProjectile extends ThrowableItemProjectile {
+public class CatspawDaggerProjectile extends SpinProjectile {
 
-    private boolean inGround = false; //todo improve in ground detection and rotation
+    public boolean inGround = false;
     private int groundTicks = 0;
 
     // Used by Forge networking

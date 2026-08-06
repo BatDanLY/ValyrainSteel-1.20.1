@@ -1,7 +1,8 @@
 {
+  "effect.valyrainsteel.shocked": "Shocked",
+
   "creativetab.valyrainsteel.valyrian_steel_equipment_tab": "GOT Equipment",
   "creativetab.valyrainsteel.valyrian_steel_materials_tab": "GOT Materials",
-
 
 
 
@@ -33,9 +34,11 @@
   "item.valyrainsteel.calamity.active": "Hurl the axe to unleash a storm of lightning where it lands.",
   "item.valyrainsteel.calamity.passive": "Strike the base of a tree to fell it in a single blow.",
 
-  "item.valyrainsteel.Nightfall": "NightFall",
+  "item.valyrainsteel.lady_forlorn": "Lady Forlorn",
 
-  "item.valyrainsteel.Tribute": "Tribute Rapier",
+  "item.valyrainsteel.nightfall": "NightFall",
+
+  "item.valyrainsteel.tribute": "Tribute Rapier",
 
 
   "item.valyrainsteel.castle_steel_plate_helmet": "Castle Steel Helmet",

@@ -1,5 +1,6 @@
 package com.batdan.valyrainsteel.client.renderer;
 
+import com.batdan.valyrainsteel.entity.projectile.SpinProjectile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -12,8 +13,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.phys.Vec3;
 
-public class ThrownItemProjectileRenderer<T extends ThrowableItemProjectile>
+public class ThrownItemProjectileRenderer<T extends SpinProjectile>
         extends EntityRenderer<T> {
 
     private final ItemRenderer itemRenderer;
@@ -37,13 +39,13 @@ public class ThrownItemProjectileRenderer<T extends ThrowableItemProjectile>
         float yaw = Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
         float pitch = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
 
+        float spin = Mth.lerp(partialTicks, entity.prevSpin, entity.spin);
+
         poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
         poseStack.mulPose(Axis.XP.rotationDegrees(pitch));
 
-        if (!entity.onGround()) {
-            float spin = (entity.tickCount + partialTicks) * 40F;
-            poseStack.mulPose(Axis.XP.rotationDegrees(spin));
-        }
+        poseStack.mulPose(Axis.XP.rotationDegrees(spin));
+
 
         itemRenderer.renderStatic(
                 entity.getItem(),

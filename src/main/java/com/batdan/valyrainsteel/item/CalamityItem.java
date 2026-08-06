@@ -19,7 +19,7 @@ import java.util.List;
 
 public class CalamityItem extends AxeItem {
 
-    public static final int COOLDOWN = 20 * 5;
+    public static final int COOLDOWN = 0;
 
     public CalamityItem(Tier tier, int attackDamage, float attackSpeed, Properties properties) {
         super(tier, attackDamage, attackSpeed, properties);

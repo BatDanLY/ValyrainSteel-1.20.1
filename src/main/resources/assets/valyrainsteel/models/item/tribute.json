@@ -1,4 +1,6 @@
 {
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
 		"0": "valyrainsteel:item/tribute",
@@ -1122,6 +1124,17 @@
 		"firstperson_righthand": {
 			"rotation": [0, 17.25, 0],
 			"translation": [0.5, 8, 1.5]
+		},
+		"firstperson_lefthand": {
+			"rotation": [0, 17.25, 0],
+			"translation": [0.5, 8, 1.5]
+		},
+		"ground": {
+			"rotation": [90, 90, 0]
+		},
+		"gui": {
+			"rotation": [-90, 45, 90],
+			"translation": [0.5, -0.5, 0]
 		}
 	},
 	"groups": [

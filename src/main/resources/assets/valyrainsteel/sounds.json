@@ -1,0 +1,14 @@
+{
+  "lady_forlorn.charge": {
+    "sounds": [ "valyrainsteel:item/lady_forlon/charge" ]
+  },
+  "lady_forlorn.release": {
+    "sounds": [ "valyrainsteel:item/lady_forlon/release" ]
+  },
+  "lady_forlorn.land": {
+    "sounds": [ "valyrainsteel:item/lady_forlon/land" ]
+  },
+  "calamity.explode": {
+    "sounds": [ "valyrainsteel:item/calamity/explode"]
+  }
+}

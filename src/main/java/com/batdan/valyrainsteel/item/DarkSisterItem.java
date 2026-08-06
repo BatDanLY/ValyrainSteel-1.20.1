@@ -36,7 +36,7 @@ import java.util.UUID;
  * required). Any living entity the player passes through during the dash is struck (counts
  * towards the crit streak) and set on fire.
  */
-public class DarkSisterItem extends SwordItem {
+public class DarkSisterItem extends LegendarySwordItem {
 
     private static final String TAG_CRIT_STACKS = "DarkSisterCritStacks";
     private static final String TAG_LAST_HIT_TIME = "DarkSisterLastHit";

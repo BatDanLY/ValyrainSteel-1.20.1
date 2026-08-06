@@ -1,4 +1,6 @@
 {
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
 	"texture_size": [32, 32],
 	"textures": {
 		"0": "valyrainsteel:item/ice",
@@ -228,22 +230,23 @@
 			"scale": [1.2, 1.2, 0.8]
 		},
 		"firstperson_righthand": {
-			"rotation": [-5, 107, -13],
-			"translation": [1.25, 5.25, 1]
+			"rotation": [-10, -70, 0],
+			"translation": [1, 5, 0],
+			"scale": [0.7, 0.7, 0.7]
 		},
 		"firstperson_lefthand": {
-			"rotation": [0, 90, -13],
-			"translation": [0, 7.75, 1]
+			"rotation": [-10, -70, 0],
+			"translation": [1, 5, 1],
+			"scale": [0.7, 0.7, 0.7]
 		},
 		"ground": {
-			"rotation": [-75, 0, 0],
-			"translation": [0, 0.25, -6],
+			"rotation": [90, 0, 0],
 			"scale": [1.2, 1.4, 0.8]
 		},
 		"gui": {
 			"rotation": [0, 0, 45],
-			"translation": [1.25, -1, 0],
-			"scale": [0.5, 0.5, 0.5]
+			"translation": [2, -2, 0],
+			"scale": [0.5, 0.56, 0.5]
 		},
 		"head": {
 			"rotation": [0, 0, 90],

@@ -28,7 +28,7 @@ import java.awt.Color;
  * relying on this compiling as-is - the class names have moved around between Lodestone releases.
  */
 @Mod.EventBusSubscriber(modid = Valyrainsteel.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
-public class ModClientVfx {
+public class ModClientvfx {
 
     private static long lastHandledCritTime = -1L;
 
