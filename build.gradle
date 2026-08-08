@@ -143,6 +143,10 @@ repositories {
         url = "https://maven.theillusivec4.top/"
     }
     maven { url = 'https://maven.blamejared.com/' }
+    maven {
+        name = "GeckoLib"
+        url = "https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/"
+    }
 }
 
 dependencies {
@@ -180,6 +184,7 @@ dependencies {
     implementation fg.deobf("team.lodestar.lodestone:lodestone:${minecraft_version}-${lodestone_version}") {
         transitive = false
     }
+    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:${geckolib_version}")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

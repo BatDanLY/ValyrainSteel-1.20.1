@@ -114,26 +114,6 @@ public class ModEvents {
         }
     }
 
-    /** Passive regen: Blackfyre's flame store slowly refills whenever it isn't actively firing. */
-    @SubscribeEvent
-    public static void onBlackfyreRegenTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-
-        Player player = event.player;
-        if (player.level().isClientSide) return;
-
-        ItemStack weapon = player.getMainHandItem();
-        if (!(weapon.getItem() instanceof BlackfyreItem)) return;
-
-        boolean activelyFiring = player.isUsingItem()
-                && player.getUsedItemHand() == net.minecraft.world.InteractionHand.MAIN_HAND
-                && player.getUseItem() == weapon;
-
-        if (!activelyFiring) {
-            BlackfyreItem.regenFlame(weapon);
-        }
-    }
-
     /** Active ability: while a dash is in progress, sweeps for entities the player passes through. */
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {

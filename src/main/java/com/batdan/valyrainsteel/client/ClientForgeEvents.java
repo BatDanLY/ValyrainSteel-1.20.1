@@ -41,8 +41,6 @@ public class ClientForgeEvents {
             mc.player.setYRot(yaw);
             mc.player.setXRot(pitch);
 
-            // Lodestone screenshake here
-
         }else{
 
             yaw = mc.player.getYRot();

@@ -1,9 +1,7 @@
 package com.batdan.valyrainsteel.item;
 
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -17,11 +15,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Tier;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
 import team.lodestar.lodestone.registry.common.particle.LodestoneParticleRegistry;
 import team.lodestar.lodestone.systems.particle.builder.WorldParticleBuilder;
 import team.lodestar.lodestone.systems.particle.data.GenericParticleData;
@@ -29,91 +31,83 @@ import team.lodestar.lodestone.systems.particle.data.color.ColorParticleData;
 import team.lodestar.lodestone.systems.particle.data.spin.SpinParticleData;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-
-/**
- * Blackfyre - a Valyrian steel longsword that runs on a stored "flame" resource.
- *
- * Passive: every melee hit that lands charges the flame store a little.
- * Active: hold right-click to unleash a continuous jet of dragonfire from the blade - a real
- * flamethrower. Particles spawn at the nozzle (the blade tip) with a random angle and speed, then
- * just fly outward - the cone shape is a straight result of those trajectories diverging, not
- * something faked by placing particles along a path.
- *
- * IMPORTANT SPLIT: Lodestone's WorldParticleBuilder is a client-side renderer and does not network
- * itself to nearby players the way vanilla's ServerLevel#sendParticles does. So this tick is split:
- *   - server: drains the flame store and does the (invisible) damage/ignite cone check
- *   - client: purely cosmetic, spawns the actual particles, using its own local aim smoothing
- * If you were previously only seeing nothing at all, this split is almost certainly why - a
- * server-only call to WorldParticleBuilder never reaches any client to render.
- *
- * The nozzle position is built off the player's BODY rotation and swinging hand (not head look),
- * so the fire visibly comes from the sword rather than snapping to wherever the camera points.
- * The stream direction also eases toward the player's actual facing every tick rather than
- * snapping instantly, so whipping the camera drags the jet behind it.
- */
-public class BlackfyreItem extends LegendarySwordItem {
+import java.util.Set;
+public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
 
     private static final String TAG_FLAME = "BlackfyreFlame";
-    private static final String TAG_AIM_YAW = "BlackfyreAimYaw";
-    private static final String TAG_AIM_PITCH = "BlackfyreAimPitch";
 
-    public static final float MAX_FLAME = 100.0f;
+    public static final float MAX_FLAME = 200.0f;
     public static final float MIN_FLAME_TO_IGNITE = 8.0f;   // needed to start the active ability
-    public static final float FLAME_GAIN_PER_HIT = 10.0f;   // passive charge per melee hit
-    public static final float FLAME_DRAIN_PER_TICK = 1.2f;  // active drain while firing (~4-5s from a full tank)
-    public static final float FLAME_REGEN_PER_TICK = 0.3f;  // passive regen while not firing
+    public static final float FLAME_GAIN_PER_HIT = 10.0f;   // the ONLY source of flame: landed melee hits
+    public static final float FLAME_DRAIN_PER_TICK = 1f;  // active drain while firing (~4-5s from a full tank)
 
-    // How far the jet reaches and how wide the emission cone is (half-angle, in degrees).
-    private static final float STREAM_RANGE = 13.0f;
-    private static final float STREAM_HALF_ANGLE_DEG = 9.0f;
+    // --- the two shared knobs: both the particles and the hit-cone are built from these ---
+    private static final float RANGE = 13.0f;
+    private static final float SPREAD_DEG = 14.0f;
 
-    private static final float STREAM_DAMAGE = 2.5f;
-    private static final int DAMAGE_INTERVAL_TICKS = 4;
+    // Small practical floor so the hit-area (and the impact billow) isn't literally zero-sized
+    // right at the blade. Not a "spread" concept, just keeps the very start of the cone usable.
+    private static final float MIN_RADIUS = 0.35f;
+
+    private static final float STREAM_DAMAGE = 5;
     private static final int FIRE_SECONDS = 5;
+    private static final double KNOCKBACK_STRENGTH = 0.2;
 
-    // How quickly the effective stream direction catches up to where the player is actually
-    // facing. Lower = laggier, heavier-feeling stream. 1.0 would mean no smoothing at all.
-    private static final float AIM_SMOOTHING = 0.15f;
+    // --- traveling hit-area ("pulse") tuning ---
+    private static final int PULSE_SPAWN_INTERVAL_TICKS = 2; // how often a fresh area spawns
+    private static final double PULSE_SPEED = 1.5;           // blocks/tick it travels outward
 
-    // Particle tuning. Speed is in blocks/tick; lifetime is in ticks, so speed * lifetime is
-    // roughly how far a given particle travels before it dies - keep that near STREAM_RANGE.
+    // --- particle tuning (purely cosmetic, client-side) ---
     private static final int STREAM_PARTICLES_PER_TICK = 18;
+    private static final double NOZZLE_JITTER = 0.05; // how tight the spawn point is
     private static final double STREAM_PARTICLE_MIN_SPEED = 0.85;
-    private static final double STREAM_PARTICLE_MAX_SPEED = 1.2;
+    private static final double STREAM_PARTICLE_MAX_SPEED = 1.6;
     private static final int STREAM_PARTICLE_MIN_LIFE = 10;
-    private static final int STREAM_PARTICLE_MAX_LIFE = 18;
+    private static final int STREAM_PARTICLE_MAX_LIFE = 22;
     private static final double STREAM_GRAVITY = 0.015; // downward tug applied to every stream particle
-
     private static final int IMPACT_PARTICLES_PER_TICK = 4;
 
-    private static final Color FLAME_COLOR_START = new Color(255, 205, 90);
-    private static final Color FLAME_COLOR_END = new Color(110, 35, 10);
+    private static final Color FLAME_COLOR_START = new Color(255, 120, 20);
+    private static final Color FLAME_COLOR_END = new Color(130, 40, 5);
     private static final Color SMOKE_COLOR_START = new Color(90, 90, 90);
     private static final Color SMOKE_COLOR_END = new Color(20, 20, 20);
 
-    // Client-only local aim smoothing cache, keyed by entity id. Deliberately NOT stored in the
-    // ItemStack's NBT, because that's written by the server and won't be synced back down every
-    // single tick - reading it client-side would be laggy/stale. Only ever touched when
-    // level.isClientSide is true.
-    private static final Map<Integer, float[]> CLIENT_AIM = new HashMap<>();
+    // Server-side only: each player's chain of currently-traveling hit-areas.
+    private static final Map<Integer, List<Pulse>> ACTIVE_PULSES = new HashMap<>();
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+
+    }
+
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
+
+    private static final class Pulse {
+        final Vec3 origin;
+        final Vec3 dir;
+        final Set<Integer> hitEntities = new HashSet<>();
+        int age;
+
+        Pulse(Vec3 origin, Vec3 dir) {
+            this.origin = origin;
+            this.dir = dir;
+        }
+    }
 
     public BlackfyreItem(Tier tier, int attackDamageModifier, float attackSpeedModifier, Properties properties) {
         super(tier, attackDamageModifier, attackSpeedModifier, properties);
     }
-
-    // Valyrian steel never takes durability damage and cannot break
-    @Override
-    public boolean isDamageable(ItemStack stack) {
-        return false;
-    }
-
-    // ---------------------------------------------------------------
-    // Flame store
-    // ---------------------------------------------------------------
 
     public static float getFlame(ItemStack stack) {
         return Math.min(stack.getOrCreateTag().getFloat(TAG_FLAME), MAX_FLAME);
@@ -124,17 +118,9 @@ public class BlackfyreItem extends LegendarySwordItem {
         tag.putFloat(TAG_FLAME, Math.max(0.0f, Math.min(MAX_FLAME, value)));
     }
 
-    /** Passive charge, called whenever Blackfyre lands a melee hit. */
+    /** The only source of flame: called whenever Blackfyre lands a melee hit. */
     public static void addFlame(ItemStack stack, float amount) {
         setFlame(stack, getFlame(stack) + amount);
-    }
-
-    /** Passive regen, called once per tick while the weapon isn't actively firing. */
-    public static void regenFlame(ItemStack stack) {
-        float current = getFlame(stack);
-        if (current < MAX_FLAME) {
-            setFlame(stack, current + FLAME_REGEN_PER_TICK);
-        }
     }
 
     /**
@@ -148,14 +134,66 @@ public class BlackfyreItem extends LegendarySwordItem {
         return true;
     }
 
+    // ---------------------------------------------------------------
+    // Ambient: blade glow while simply holding the sword
+    // ---------------------------------------------------------------
+
     @Override
-    public void appendHoverText(ItemStack stack, Level level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-        int flame = Math.round(getFlame(stack));
-        tooltip.add(Component.literal(String.format(Locale.ROOT, "Flame: %d / %d", flame, (int) MAX_FLAME))
-                .withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("Hold to unleash a jet of dragonfire").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("Landing hits recharges the flame store").withStyle(ChatFormatting.DARK_GRAY));
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected);
+
+        if (!level.isClientSide) return;
+        if (!isSelected) return;
+        if (!(entity instanceof Player player)) return;
+        if (player.isUsingItem()) return; // the firing stream already covers this
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != player) return; // only render this for the controlling client
+        if (!mc.options.getCameraType().isFirstPerson()) return;
+
+        tickBladeGlow(level, player, stack);
+    }
+
+    private static void tickBladeGlow(Level level, Player player, ItemStack stack) {
+        float fraction = getFlame(stack) / MAX_FLAME;
+        if (fraction <= 0f) return;
+
+        RandomSource random = level.getRandom();
+        // spawns more often, and more embers at once, the fuller the tank is
+        if (random.nextFloat() > 0.12f + fraction * 0.45f) return;
+
+        Vec3 lookDir = player.getLookAngle();
+        Vec3 right = lookDir.cross(new Vec3(0, 1, 0));
+        if (right.lengthSqr() < 1.0E-4) right = lookDir.cross(new Vec3(1, 0, 0));
+        right = right.normalize();
+        Vec3 up = right.cross(lookDir).normalize();
+
+        // rough position of the blade as it sits in a typical first-person viewmodel
+        Vec3 bladePos = player.getEyePosition()
+                .add(lookDir.scale(0.55))
+                .add(right.scale(0.55))
+                .add(up.scale(-0.09));
+
+        int embers = 1 + Math.round(fraction * 4);
+        for (int i = 0; i < embers; i++) {
+            double px = bladePos.x + (random.nextDouble() - 0.5) * 0.1;
+            double py = bladePos.y + (random.nextDouble() - 0.5) * 0.1;
+            double pz = bladePos.z + (random.nextDouble() - 0.5) * 0.1;
+
+            double dx = (random.nextDouble() - 0.5) * 0.01;
+            double dy = 0.04 + random.nextDouble() * 0.015;
+            double dz = (random.nextDouble() - 0.5) * 0.01;
+
+            WorldParticleBuilder.create(LodestoneParticleRegistry.SMOKE_PARTICLE)
+                    .setLifetime(10 + random.nextInt(6))
+                    .setScaleData(GenericParticleData.create(0.08f + fraction * 0.06f, 0.02f).build())
+                    .setTransparencyData(GenericParticleData.create(0.85f, 0f).build())
+                    .setColorData(ColorParticleData.create(FLAME_COLOR_START, FLAME_COLOR_END).build())
+                    .setSpinData(SpinParticleData.create(0f, 0.1f).build())
+                    .setMotion(dx, dy, dz)
+                    .enableNoClip()
+                    .spawn(level, px, py, pz);
+        }
     }
 
     // ---------------------------------------------------------------
@@ -171,16 +209,6 @@ public class BlackfyreItem extends LegendarySwordItem {
                 level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.PLAYERS, 0.4f, 1.8f);
             }
             return InteractionResultHolder.fail(stack);
-        }
-
-        // Snap whichever side's aim tracker to the player's current facing, so the stream
-        // doesn't have to "catch up" from zero the instant the trigger is held.
-        if (level.isClientSide) {
-            CLIENT_AIM.put(player.getId(), new float[] { player.yBodyRot, player.getXRot() });
-        } else {
-            CompoundTag tag = stack.getOrCreateTag();
-            tag.putFloat(TAG_AIM_YAW, player.yBodyRot);
-            tag.putFloat(TAG_AIM_PITCH, player.getXRot());
         }
 
         player.startUsingItem(hand);
@@ -208,22 +236,59 @@ public class BlackfyreItem extends LegendarySwordItem {
         }
     }
 
-    /** Server-side: costs flame, checks the cone for entities to damage/ignite. No visuals here. */
+    /** Server-side: costs flame, spawns/advances/resolves the traveling hit-areas. No visuals here. */
     private void tickServerLogic(Level level, Player player, ItemStack stack, int remainingUseDuration) {
         if (!drainForTick(stack)) {
             // ran dry mid-stream: cut off immediately and snuff it out
             player.stopUsingItem();
+            ACTIVE_PULSES.remove(player.getId());
             playExtinguish(level, player);
             return;
         }
 
-        float aimYaw = updateSmoothedAngle(stack, TAG_AIM_YAW, player.yBodyRot, AIM_SMOOTHING);
-        float aimPitch = updateSmoothedAngle(stack, TAG_AIM_PITCH, player.getXRot(), AIM_SMOOTHING);
-        Vec3 dir = calculateViewVector(aimPitch, aimYaw);
-        Vec3 origin = computeOrigin(player, aimYaw, dir);
+        List<Pulse> pulses = ACTIVE_PULSES.computeIfAbsent(player.getId(), id -> new ArrayList<>());
 
-        if (remainingUseDuration % DAMAGE_INTERVAL_TICKS == 0) {
-            applyStreamDamage(level, player, origin, dir);
+        // spawn a fresh area every couple of ticks, at the blade, aimed wherever the player is
+        // looking right now
+        if (remainingUseDuration % PULSE_SPAWN_INTERVAL_TICKS == 0) {
+            Vec3 pulseOrigin = computeOrigin(player, player.yBodyRot);
+            pulses.add(new Pulse(pulseOrigin, player.getLookAngle()));
+        }
+
+        double spreadTan = Math.tan(Math.toRadians(SPREAD_DEG));
+
+        Iterator<Pulse> it = pulses.iterator();
+        while (it.hasNext()) {
+            Pulse pulse = it.next();
+            pulse.age++;
+
+            double distance = pulse.age * PULSE_SPEED;
+            if (distance > RANGE) {
+                it.remove();
+                continue;
+            }
+
+            // true cone geometry: radius grows in lockstep with SPREAD_DEG, same angle the
+            // particles jitter within, so the visible cone and the hit-area match
+            float radius = MIN_RADIUS + (float) (distance * spreadTan);
+            Vec3 center = pulse.origin.add(pulse.dir.scale(distance));
+
+            AABB searchBox = new AABB(center, center).inflate(radius);
+            List<Entity> nearby = level.getEntities(player, searchBox,
+                    e -> e instanceof LivingEntity && e != player && e.isAlive());
+
+            for (Entity e : nearby) {
+                if (pulse.hitEntities.contains(e.getId())) continue;
+
+                double dist = e.position().add(0, e.getBbHeight() * 0.5, 0).distanceTo(center);
+                if (dist > radius) continue;
+
+                LivingEntity living = (LivingEntity) e;
+                living.hurt(player.damageSources().playerAttack(player), STREAM_DAMAGE);
+                living.setSecondsOnFire(FIRE_SECONDS);
+                living.knockback(KNOCKBACK_STRENGTH, player.getX() - living.getX(), player.getZ() - living.getZ());
+                pulse.hitEntities.add(e.getId());
+            }
         }
 
         if (remainingUseDuration % 10 == 0) {
@@ -231,30 +296,28 @@ public class BlackfyreItem extends LegendarySwordItem {
         }
     }
 
-    /** Client-side: purely cosmetic. Spawns the actual flame + smoke particles. */
+    /** Client-side: purely cosmetic. Spawns at the blade tip, flies toward where the player is looking. */
     private static void tickClientVisuals(Level level, Player player) {
-        float[] aim = CLIENT_AIM.computeIfAbsent(player.getId(), id -> new float[] { player.yBodyRot, player.getXRot() });
-        aim[0] += Mth.wrapDegrees(player.yBodyRot - aim[0]) * AIM_SMOOTHING;
-        aim[1] += Mth.wrapDegrees(player.getXRot() - aim[1]) * AIM_SMOOTHING;
-        float aimYaw = aim[0];
-        float aimPitch = aim[1];
+        Vec3 origin = computeOrigin(player, player.yBodyRot);
 
-        Vec3 dir = calculateViewVector(aimPitch, aimYaw);
-        Vec3 origin = computeOrigin(player, aimYaw, dir);
+        float lookYaw = player.getYRot();
+        float lookPitch = player.getXRot();
+        Vec3 lookDir = player.getLookAngle();
+
         RandomSource random = level.getRandom();
 
-        // --- fire the stream: spawn AT the nozzle with an initial velocity and let it fly ---
+        // --- fire the stream: spawn AT the blade, but the velocity points where you're looking ---
         for (int i = 0; i < STREAM_PARTICLES_PER_TICK; i++) {
-            float particleYaw = aimYaw + (float) ((random.nextDouble() - 0.5) * 2.0 * STREAM_HALF_ANGLE_DEG);
-            float particlePitch = aimPitch + (float) ((random.nextDouble() - 0.5) * 2.0 * STREAM_HALF_ANGLE_DEG);
+            float particleYaw = lookYaw + (float) ((random.nextDouble() - 0.5) * 2.0 * SPREAD_DEG);
+            float particlePitch = lookPitch + (float) ((random.nextDouble() - 0.5) * 2.0 * SPREAD_DEG);
             Vec3 particleDir = calculateViewVector(particlePitch, particleYaw);
 
             double speed = STREAM_PARTICLE_MIN_SPEED + random.nextDouble() * (STREAM_PARTICLE_MAX_SPEED - STREAM_PARTICLE_MIN_SPEED);
             Vec3 motion = particleDir.scale(speed).add(0, -STREAM_GRAVITY, 0);
 
-            double px = origin.x + (random.nextDouble() - 0.5) * 0.15;
-            double py = origin.y + (random.nextDouble() - 0.5) * 0.15;
-            double pz = origin.z + (random.nextDouble() - 0.5) * 0.15;
+            double px = origin.x + (random.nextDouble() - 0.5) * NOZZLE_JITTER;
+            double py = origin.y + (random.nextDouble() - 0.5) * NOZZLE_JITTER;
+            double pz = origin.z + (random.nextDouble() - 0.5) * NOZZLE_JITTER;
 
             int lifetime = STREAM_PARTICLE_MIN_LIFE + random.nextInt(STREAM_PARTICLE_MAX_LIFE - STREAM_PARTICLE_MIN_LIFE);
 
@@ -270,14 +333,14 @@ public class BlackfyreItem extends LegendarySwordItem {
         }
 
         // --- extra smoke billowing where the jet reaches the end of its range ---
-        Vec3 impactCenter = origin.add(dir.scale(STREAM_RANGE));
-        Vec3 right = dir.cross(new Vec3(0, 1, 0));
+        Vec3 impactCenter = origin.add(lookDir.scale(RANGE));
+        Vec3 right = lookDir.cross(new Vec3(0, 1, 0));
         if (right.lengthSqr() < 1.0E-4) {
-            right = dir.cross(new Vec3(1, 0, 0));
+            right = lookDir.cross(new Vec3(1, 0, 0));
         }
         right = right.normalize();
-        Vec3 up = right.cross(dir).normalize();
-        float impactRadius = STREAM_RANGE * (float) Math.tan(Math.toRadians(STREAM_HALF_ANGLE_DEG));
+        Vec3 up = right.cross(lookDir).normalize();
+        float impactRadius = MIN_RADIUS + (float) (RANGE * Math.tan(Math.toRadians(SPREAD_DEG)));
 
         for (int i = 0; i < IMPACT_PARTICLES_PER_TICK; i++) {
             double angle = random.nextDouble() * Math.PI * 2;
@@ -305,50 +368,27 @@ public class BlackfyreItem extends LegendarySwordItem {
         }
     }
 
-    private static void applyStreamDamage(Level level, Player player, Vec3 origin, Vec3 dir) {
-        double halfAngleCos = Math.cos(Math.toRadians(STREAM_HALF_ANGLE_DEG));
-        AABB searchBox = new AABB(origin, origin).inflate(STREAM_RANGE);
-
-        List<Entity> nearby = level.getEntities(player, searchBox,
-                e -> e instanceof LivingEntity && e != player && e.isAlive());
-
-        for (Entity e : nearby) {
-            Vec3 toEntity = e.position().add(0, e.getBbHeight() * 0.5, 0).subtract(origin);
-            double distance = toEntity.length();
-            if (distance < 0.001 || distance > STREAM_RANGE) continue;
-
-            double cos = toEntity.scale(1.0 / distance).dot(dir);
-            if (cos < halfAngleCos) continue;
-
-            LivingEntity living = (LivingEntity) e;
-            living.hurt(player.damageSources().playerAttack(player), STREAM_DAMAGE);
-            living.setSecondsOnFire(FIRE_SECONDS);
-        }
-    }
-
     /** Blade-tip nozzle position: body rotation + swinging hand, not head look. */
-    private static Vec3 computeOrigin(Player player, float aimYaw, Vec3 dir) {
+    private static Vec3 computeOrigin(Player player, float bodyYaw) {
         InteractionHand usedHand = player.getUsedItemHand();
         boolean isMainHandRight = player.getMainArm() == HumanoidArm.RIGHT;
         boolean usingMainHand = usedHand == InteractionHand.MAIN_HAND;
         double handSide = (usingMainHand == isMainHandRight) ? 1.0 : -1.0;
 
-        double yawRad = Math.toRadians(aimYaw);
+        double yawRad = Math.toRadians(bodyYaw);
         Vec3 bodyForward = new Vec3(-Math.sin(yawRad), 0, Math.cos(yawRad));
         Vec3 bodyRight = new Vec3(bodyForward.z, 0, -bodyForward.x);
 
         return new Vec3(player.getX(), player.getY() + player.getEyeHeight() * 0.82, player.getZ())
                 .add(bodyForward.scale(0.9))
-                .add(bodyRight.scale(0.4 * handSide))
-                .add(dir.scale(0.6));
+                .add(bodyRight.scale(-0.4 * handSide));
     }
 
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-        if (level.isClientSide) {
-            CLIENT_AIM.remove(entity.getId());
-            return;
-        }
+        if (level.isClientSide) return;
+
+        ACTIVE_PULSES.remove(entity.getId());
         if (entity instanceof Player player) {
             level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.PLAYERS, 0.5f, 1.4f);
         }
@@ -362,24 +402,7 @@ public class BlackfyreItem extends LegendarySwordItem {
         level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.PLAYERS, 0.8f, 1.1f);
     }
 
-    // ---------------------------------------------------------------
-    // Aim smoothing / math helpers
-    // ---------------------------------------------------------------
-
-    /**
-     * Moves the stored angle at {@code tagKey} a fraction of the way toward {@code target},
-     * wrapping correctly across the 180/-180 boundary, and returns the new value. Server-side only.
-     */
-    private static float updateSmoothedAngle(ItemStack stack, String tagKey, float target, float smoothing) {
-        CompoundTag tag = stack.getOrCreateTag();
-        float current = tag.getFloat(tagKey);
-        float delta = Mth.wrapDegrees(target - current);
-        float next = current + delta * smoothing;
-        tag.putFloat(tagKey, next);
-        return next;
-    }
-
-    /** Same math as vanilla's Entity#calculateViewVector, exposed so we can feed it smoothed angles. */
+    /** Same math as vanilla's Entity#calculateViewVector, exposed so we can feed it jittered angles. */
     private static Vec3 calculateViewVector(float pitch, float yaw) {
         float f = pitch * ((float) Math.PI / 180F);
         float f1 = -yaw * ((float) Math.PI / 180F);
