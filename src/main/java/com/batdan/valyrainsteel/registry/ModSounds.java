@@ -7,7 +7,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-class ModSounds {
+public class ModSounds {
     public static final DeferredRegister<SoundEvent> SOUNDS =
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Valyrainsteel.MODID);
 
