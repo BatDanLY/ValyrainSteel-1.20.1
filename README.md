@@ -21,14 +21,9 @@ The idea is to bring some of the famous weapons from Westeros into Minecraft, wi
 <img width="851" height="806" alt="image" src="https://github.com/user-attachments/assets/759e4887-3283-4c0e-a66f-05307dccaf61" />
 <img width="354" height="279" alt="image" src="https://github.com/user-attachments/assets/f721cc4d-391e-4abd-b58a-568d7ae6722d" />
 
-
-
-
-
-![Weapon abilities in action](screenshots/abilities.png)
-
 ### Armour and equipment
-![Armour and equipment](screenshots/armour-and-equipment.png)
+<img width="522" height="216" alt="image" src="https://github.com/user-attachments/assets/92c61dad-a341-4318-8a06-2dbac36e685f" />
+
 
 > If you haven't taken screenshots yet, you can leave these placeholders for now and add the images later. Make sure the filenames match the ones above.
 
