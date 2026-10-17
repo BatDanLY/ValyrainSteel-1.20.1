@@ -9,10 +9,22 @@ The idea is to bring some of the famous weapons from Westeros into Minecraft, wi
 <!-- Replace these paths with your screenshots. Put the images in a folder called `screenshots` in the repository. -->
 
 ### Weapons
-<img width="2051" height="1174" alt="Valyrian Steel Weapons 1" src="https://github.com/user-attachments/assets/a876ec76-93a9-4614-8dc0-9e7b590f4b79" />
+<img width="1589" height="980" alt="weapons1" src="https://github.com/user-attachments/assets/bbb67c37-264b-480f-9ada-ae6ed848ece1" />
+<img width="1161" height="1010" alt="image" src="https://github.com/user-attachments/assets/9f892596-d677-478e-92f1-138ba7cb5818" />
+
 
 
 ### Weapon abilities
+<img width="857" height="883" alt="image" src="https://github.com/user-attachments/assets/518bb831-75f2-4024-9914-89342bd603d1" />
+<img width="906" height="665" alt="image" src="https://github.com/user-attachments/assets/4334ee12-3d17-4e94-b0b8-3afe0ef5e448" />
+<img width="1013" height="1344" alt="image" src="https://github.com/user-attachments/assets/9741dc78-4039-4427-b10e-3b6dea514108" />
+<img width="851" height="806" alt="image" src="https://github.com/user-attachments/assets/759e4887-3283-4c0e-a66f-05307dccaf61" />
+<img width="354" height="279" alt="image" src="https://github.com/user-attachments/assets/f721cc4d-391e-4abd-b58a-568d7ae6722d" />
+
+
+
+
+
 ![Weapon abilities in action](screenshots/abilities.png)
 
 ### Armour and equipment
