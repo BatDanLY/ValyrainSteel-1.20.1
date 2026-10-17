@@ -27,7 +27,6 @@ public class ModEvents {
 
     private static final long DASH_HIT_COOLDOWN_TICKS = 10;
 
-    /** Passive ability: rolls the stacking crit chance whenever Dark Sister lands a melee hit. */
     @SubscribeEvent
     public static void onLivingHurt(LivingHurtEvent event) {
         DamageSource source = event.getSource();
@@ -63,16 +62,11 @@ public class ModEvents {
         }
     }
 
-    /** Roughly where the blade tip sits for a player, used for the heat/extinguish effects. */
     private static net.minecraft.world.phys.Vec3 bladeTipPos(Player player) {
         net.minecraft.world.phys.Vec3 look = player.getLookAngle().normalize();
         return player.getEyePosition().add(look.x * 1.1, -0.3 + look.y * 1.1, look.z * 1.1);
     }
 
-    /**
-     * Ambient effects for a held Dark Sister: the hotter the streak, the more flame/smoke drips
-     * off the blade, and letting the streak go cold plays an extinguish hiss.
-     */
     @SubscribeEvent
     public static void onPlayerHeldItemTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -84,7 +78,6 @@ public class ModEvents {
         ItemStack weapon = player.getMainHandItem();
         if (!(weapon.getItem() instanceof DarkSisterItem)) return;
 
-        // Extinguish check: if the streak has gone cold, snuff it out and play the effect
         if (DarkSisterItem.tickAndCheckExtinguish(weapon, level)) {
             net.minecraft.world.phys.Vec3 pos = bladeTipPos(player);
             if (level instanceof ServerLevel serverLevel) {
@@ -94,14 +87,13 @@ public class ModEvents {
             level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.PLAYERS, 0.8f, 1.2f);
         }
 
-        // Ambient heat particles, scaled by how many stacks are built up
         int stacks = DarkSisterItem.getCritStacks(weapon);
         if (stacks <= 0) return;
-        if (level.getGameTime() % 4 != 0) return; // throttle: every 4 ticks
+        if (level.getGameTime() % 4 != 0) return;
 
         net.minecraft.world.phys.Vec3 pos = bladeTipPos(player);
-        int flameCount = stacks / 2;       // 0-5
-        int smokeCount = stacks;           // 0-10
+        int flameCount = stacks / 2;
+        int smokeCount = stacks;
 
         if (level instanceof ServerLevel serverLevel) {
             if (flameCount > 0) {
@@ -114,7 +106,6 @@ public class ModEvents {
         }
     }
 
-    /** Active ability: while a dash is in progress, sweeps for entities the player passes through. */
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -129,7 +120,6 @@ public class ModEvents {
         ItemStack weapon = player.getMainHandItem();
         boolean holdingDarkSister = weapon.getItem() instanceof DarkSisterItem;
 
-        // Sweep a box covering this tick's movement so fast-moving dashes don't skip over entities
         AABB sweep = player.getBoundingBox()
                 .expandTowards(player.getDeltaMovement().x, player.getDeltaMovement().y, player.getDeltaMovement().z)
                 .inflate(0.6);
@@ -143,7 +133,7 @@ public class ModEvents {
             LivingEntity living = (LivingEntity) entity;
 
             long lastDashHit = living.getPersistentData().getLong("valyrainsteel_dash_hit_time");
-            if (now - lastDashHit < DASH_HIT_COOLDOWN_TICKS) continue; // already struck this dash
+            if (now - lastDashHit < DASH_HIT_COOLDOWN_TICKS) continue;
 
             float damage = DarkSisterItem.DASH_HIT_DAMAGE;
             boolean isCrit = holdingDarkSister && DarkSisterItem.rollAndAdvanceCrit(weapon, player.level());

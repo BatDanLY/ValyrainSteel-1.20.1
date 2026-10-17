@@ -28,7 +28,6 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void registerOverlays(RegisterGuiOverlaysEvent event) {
-        // Register HUD overlay here
     }
 
     @SubscribeEvent

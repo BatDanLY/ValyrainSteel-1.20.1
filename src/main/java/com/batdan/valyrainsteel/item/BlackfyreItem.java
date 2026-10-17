@@ -43,34 +43,30 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
     private static final String TAG_FLAME = "BlackfyreFlame";
 
     public static final float MAX_FLAME = 200.0f;
-    public static final float MIN_FLAME_TO_IGNITE = 8.0f;   // needed to start the active ability
-    public static final float FLAME_GAIN_PER_HIT = 10.0f;   // the ONLY source of flame: landed melee hits
-    public static final float FLAME_DRAIN_PER_TICK = 1f;  // active drain while firing (~4-5s from a full tank)
+    public static final float MIN_FLAME_TO_IGNITE = 8.0f;
+    public static final float FLAME_GAIN_PER_HIT = 10.0f;
+    public static final float FLAME_DRAIN_PER_TICK = 1f;
 
-    // --- the two shared knobs: both the particles and the hit-cone are built from these ---
     private static final float RANGE = 13.0f;
     private static final float SPREAD_DEG = 14.0f;
 
-    // Small practical floor so the hit-area (and the impact billow) isn't literally zero-sized
-    // right at the blade. Not a "spread" concept, just keeps the very start of the cone usable.
+
     private static final float MIN_RADIUS = 0.35f;
 
     private static final float STREAM_DAMAGE = 5;
     private static final int FIRE_SECONDS = 5;
     private static final double KNOCKBACK_STRENGTH = 0.2;
 
-    // --- traveling hit-area ("pulse") tuning ---
-    private static final int PULSE_SPAWN_INTERVAL_TICKS = 2; // how often a fresh area spawns
-    private static final double PULSE_SPEED = 1.5;           // blocks/tick it travels outward
+    private static final int PULSE_SPAWN_INTERVAL_TICKS = 2;
+    private static final double PULSE_SPEED = 1.5;
 
-    // --- particle tuning (purely cosmetic, client-side) ---
     private static final int STREAM_PARTICLES_PER_TICK = 18;
-    private static final double NOZZLE_JITTER = 0.05; // how tight the spawn point is
+    private static final double NOZZLE_JITTER = 0.05;
     private static final double STREAM_PARTICLE_MIN_SPEED = 0.85;
     private static final double STREAM_PARTICLE_MAX_SPEED = 1.6;
     private static final int STREAM_PARTICLE_MIN_LIFE = 10;
     private static final int STREAM_PARTICLE_MAX_LIFE = 22;
-    private static final double STREAM_GRAVITY = 0.015; // downward tug applied to every stream particle
+    private static final double STREAM_GRAVITY = 0.015;
     private static final int IMPACT_PARTICLES_PER_TICK = 4;
 
     private static final Color FLAME_COLOR_START = new Color(255, 120, 20);
@@ -78,13 +74,10 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
     private static final Color SMOKE_COLOR_START = new Color(90, 90, 90);
     private static final Color SMOKE_COLOR_END = new Color(20, 20, 20);
 
-    // Server-side only: each player's chain of currently-traveling hit-areas.
     private static final Map<Integer, List<Pulse>> ACTIVE_PULSES = new HashMap<>();
 
     @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-
-    }
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {}
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
@@ -118,25 +111,16 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         tag.putFloat(TAG_FLAME, Math.max(0.0f, Math.min(MAX_FLAME, value)));
     }
 
-    /** The only source of flame: called whenever Blackfyre lands a melee hit. */
     public static void addFlame(ItemStack stack, float amount) {
         setFlame(stack, getFlame(stack) + amount);
     }
 
-    /**
-     * Drains the active-use cost for one tick of firing.
-     * @return true if there was enough flame to pay for this tick, false if the store just ran dry
-     */
     private static boolean drainForTick(ItemStack stack) {
         float current = getFlame(stack);
         if (current <= 0.0f) return false;
         setFlame(stack, current - FLAME_DRAIN_PER_TICK);
         return true;
     }
-
-    // ---------------------------------------------------------------
-    // Ambient: blade glow while simply holding the sword
-    // ---------------------------------------------------------------
 
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
@@ -145,10 +129,10 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         if (!level.isClientSide) return;
         if (!isSelected) return;
         if (!(entity instanceof Player player)) return;
-        if (player.isUsingItem()) return; // the firing stream already covers this
+        if (player.isUsingItem()) return;
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player != player) return; // only render this for the controlling client
+        if (mc.player != player) return;
         if (!mc.options.getCameraType().isFirstPerson()) return;
 
         tickBladeGlow(level, player, stack);
@@ -159,7 +143,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         if (fraction <= 0f) return;
 
         RandomSource random = level.getRandom();
-        // spawns more often, and more embers at once, the fuller the tank is
         if (random.nextFloat() > 0.12f + fraction * 0.45f) return;
 
         Vec3 lookDir = player.getLookAngle();
@@ -168,7 +151,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         right = right.normalize();
         Vec3 up = right.cross(lookDir).normalize();
 
-        // rough position of the blade as it sits in a typical first-person viewmodel
         Vec3 bladePos = player.getEyePosition()
                 .add(lookDir.scale(0.55))
                 .add(right.scale(0.55))
@@ -196,10 +178,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Active: flamethrower stream
-    // ---------------------------------------------------------------
-
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
@@ -217,7 +195,7 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
 
     @Override
     public int getUseDuration(ItemStack stack) {
-        return 72000; // fires for as long as it's held and there's flame left
+        return 72000;
     }
 
     @Override
@@ -236,10 +214,8 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         }
     }
 
-    /** Server-side: costs flame, spawns/advances/resolves the traveling hit-areas. No visuals here. */
     private void tickServerLogic(Level level, Player player, ItemStack stack, int remainingUseDuration) {
         if (!drainForTick(stack)) {
-            // ran dry mid-stream: cut off immediately and snuff it out
             player.stopUsingItem();
             ACTIVE_PULSES.remove(player.getId());
             playExtinguish(level, player);
@@ -248,8 +224,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
 
         List<Pulse> pulses = ACTIVE_PULSES.computeIfAbsent(player.getId(), id -> new ArrayList<>());
 
-        // spawn a fresh area every couple of ticks, at the blade, aimed wherever the player is
-        // looking right now
         if (remainingUseDuration % PULSE_SPAWN_INTERVAL_TICKS == 0) {
             Vec3 pulseOrigin = computeOrigin(player, player.yBodyRot);
             pulses.add(new Pulse(pulseOrigin, player.getLookAngle()));
@@ -268,8 +242,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
                 continue;
             }
 
-            // true cone geometry: radius grows in lockstep with SPREAD_DEG, same angle the
-            // particles jitter within, so the visible cone and the hit-area match
             float radius = MIN_RADIUS + (float) (distance * spreadTan);
             Vec3 center = pulse.origin.add(pulse.dir.scale(distance));
 
@@ -296,7 +268,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         }
     }
 
-    /** Client-side: purely cosmetic. Spawns at the blade tip, flies toward where the player is looking. */
     private static void tickClientVisuals(Level level, Player player) {
         Vec3 origin = computeOrigin(player, player.yBodyRot);
 
@@ -332,7 +303,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
                     .spawn(level, px, py, pz);
         }
 
-        // --- extra smoke billowing where the jet reaches the end of its range ---
         Vec3 impactCenter = origin.add(lookDir.scale(RANGE));
         Vec3 right = lookDir.cross(new Vec3(0, 1, 0));
         if (right.lengthSqr() < 1.0E-4) {
@@ -368,7 +338,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         }
     }
 
-    /** Blade-tip nozzle position: body rotation + swinging hand, not head look. */
     private static Vec3 computeOrigin(Player player, float bodyYaw) {
         InteractionHand usedHand = player.getUsedItemHand();
         boolean isMainHandRight = player.getMainArm() == HumanoidArm.RIGHT;
@@ -402,7 +371,6 @@ public class BlackfyreItem extends LegendarySwordItem implements GeoItem {
         level.playSound(null, player.blockPosition(), SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.PLAYERS, 0.8f, 1.1f);
     }
 
-    /** Same math as vanilla's Entity#calculateViewVector, exposed so we can feed it jittered angles. */
     private static Vec3 calculateViewVector(float pitch, float yaw) {
         float f = pitch * ((float) Math.PI / 180F);
         float f1 = -yaw * ((float) Math.PI / 180F);

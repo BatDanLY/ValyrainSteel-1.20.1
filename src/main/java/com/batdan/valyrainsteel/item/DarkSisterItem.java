@@ -24,18 +24,6 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
-
-/**
- * Dark Sister - a Valyrian steel longsword.
- *
- * Passive: every consecutive hit (melee or via the dash) raises the weapon's critical chance by
- * 5%, up to 10 stacks (50%). A critical hit deals 2x damage. The streak resets if the weapon
- * hasn't landed a hit in {@link #HIT_RESET_TICKS} ticks.
- *
- * Active: right-click and hold briefly, then release, to dash forward (Riptide-style, no water
- * required). Any living entity the player passes through during the dash is struck (counts
- * towards the crit streak) and set on fire.
- */
 public class DarkSisterItem extends LegendarySwordItem {
 
     private static final String TAG_CRIT_STACKS = "DarkSisterCritStacks";
@@ -43,43 +31,31 @@ public class DarkSisterItem extends LegendarySwordItem {
     private static final String TAG_LAST_CRIT_TIME = "DarkSisterLastCrit";
 
     public static final int MAX_STACKS = 10;
-    public static final float STACK_PERCENT = 0.05f; // 5% per stack, caps at 50%
-    public static final long HIT_RESET_TICKS = 60;   // 3 seconds without landing a hit resets the streak
+    public static final float STACK_PERCENT = 0.05f;
+    public static final long HIT_RESET_TICKS = 60;
 
-    private static final int DASH_COOLDOWN_TICKS = 60;   // 3 second cooldown on the dash
+    private static final int DASH_COOLDOWN_TICKS = 60;
     private static final float DASH_STRENGTH = 2.6f;
-    private static final int MIN_CHARGE_TICKS = 5;       // minimum hold time before release triggers the dash
+    private static final int MIN_CHARGE_TICKS = 5;
     public static final float DASH_HIT_DAMAGE = 6.0f;
 
     public DarkSisterItem(Tier tier, int attackDamageModifier, float attackSpeedModifier, Properties properties) {
         super(tier, attackDamageModifier, attackSpeedModifier, properties);
     }
 
-    // ---------------------------------------------------------------
-    // Passive: stacking critical chance
-    // ---------------------------------------------------------------
-
-    /** Current crit chance (0.0 - 0.5) stored on the stack, for tooltip/UI use. */
     public static float getCurrentCritChance(ItemStack stack) {
         int stacks = Math.min(stack.getOrCreateTag().getInt(TAG_CRIT_STACKS), MAX_STACKS);
         return stacks * STACK_PERCENT;
     }
 
-    /** Current stack count (0-10), used to drive the blade's visual "heat" and particle intensity. */
     public static int getCritStacks(ItemStack stack) {
         return Math.min(stack.getOrCreateTag().getInt(TAG_CRIT_STACKS), MAX_STACKS);
     }
 
-    /** 0.0 - 1.0 heat value read by the client-side item property, used to pick the blade model/texture stage. */
     public static float getHeatProperty(ItemStack stack) {
         return getCritStacks(stack) / (float) MAX_STACKS;
     }
 
-    /**
-     * Call once per server tick for a held Dark Sister. If the streak has gone quiet for longer
-     * than {@link #HIT_RESET_TICKS}, immediately clears the stacks (rather than waiting for the
-     * next swing to notice) and reports that it just extinguished so callers can play an effect.
-     */
     public static boolean tickAndCheckExtinguish(ItemStack stack, Level level) {
         CompoundTag tag = stack.getOrCreateTag();
         int stacks = tag.getInt(TAG_CRIT_STACKS);
@@ -94,13 +70,6 @@ public class DarkSisterItem extends LegendarySwordItem {
         return false;
     }
 
-    /**
-     * Rolls a crit for the hit currently landing, using the chance built up from previous
-     * consecutive hits, then advances the streak for the next hit. Call this exactly once per
-     * hit landed (melee hit or dash pass-through).
-     *
-     * @return true if this hit rolled as a critical (i.e. should deal 2x damage)
-     */
     public static boolean rollAndAdvanceCrit(ItemStack stack, Level level) {
         CompoundTag tag = stack.getOrCreateTag();
 
@@ -109,7 +78,7 @@ public class DarkSisterItem extends LegendarySwordItem {
         int stacks = tag.getInt(TAG_CRIT_STACKS);
 
         if (lastHit != 0 && now - lastHit > HIT_RESET_TICKS) {
-            stacks = 0; // streak broken, this hit starts back at 0%
+            stacks = 0;
         }
 
         float chance = Math.min(stacks, MAX_STACKS) * STACK_PERCENT;
@@ -126,14 +95,9 @@ public class DarkSisterItem extends LegendarySwordItem {
         return isCrit;
     }
 
-    /** Game-time tick of the most recent crit, read client-side to trigger a one-shot VFX burst. */
     public static long getLastCritTime(ItemStack stack) {
         return stack.getOrCreateTag().getLong(TAG_LAST_CRIT_TIME);
     }
-
-    // ---------------------------------------------------------------
-    // Active: dash
-    // ---------------------------------------------------------------
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -149,7 +113,7 @@ public class DarkSisterItem extends LegendarySwordItem {
 
     @Override
     public int getUseDuration(ItemStack stack) {
-        return 72000; // held indefinitely until released, same pattern as the trident
+        return 72000;
     }
 
     @Override
@@ -162,7 +126,7 @@ public class DarkSisterItem extends LegendarySwordItem {
         if (!(entity instanceof Player player)) return;
 
         int chargeDuration = this.getUseDuration(stack) - timeLeft;
-        if (chargeDuration < MIN_CHARGE_TICKS) return; // released too early, no dash
+        if (chargeDuration < MIN_CHARGE_TICKS) return;
 
         if (level.isClientSide) return;
 
@@ -172,11 +136,10 @@ public class DarkSisterItem extends LegendarySwordItem {
                 look.y * DASH_STRENGTH * 0.6 + 0.15,
                 look.z * DASH_STRENGTH
         ));
-        player.hurtMarked = true; // forces the velocity change to sync to the client, like riptide does
+        player.hurtMarked = true;
 
         player.getCooldowns().addCooldown(this, DASH_COOLDOWN_TICKS);
 
-        // Flag the player as "dashing" so ModEvents' tick handler sweeps for entities in the path
         player.getPersistentData().putInt("valyrainsteel_dash_ticks", 8);
         player.getPersistentData().putUUID("valyrainsteel_dash_id", UUID.randomUUID());
 
@@ -191,23 +154,18 @@ public class DarkSisterItem extends LegendarySwordItem {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Ambient blade visuals: heats up / smokes with the crit streak, extinguishes when it drops
-    // ---------------------------------------------------------------
-
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slot, isSelected);
 
         if (!(entity instanceof LivingEntity living)) return;
-        if (!isSelected || living.getMainHandItem() != stack) return; // only while actively wielded
+        if (!isSelected || living.getMainHandItem() != stack) return;
 
         CompoundTag tag = stack.getOrCreateTag();
         int stacks = Math.min(tag.getInt(TAG_CRIT_STACKS), MAX_STACKS);
         long lastHit = tag.getLong(TAG_LAST_HIT_TIME);
         long now = level.getGameTime();
 
-        // The streak has gone cold - snuff the blade out
         if (stacks > 0 && lastHit != 0 && now - lastHit > HIT_RESET_TICKS) {
             tag.putInt(TAG_CRIT_STACKS, 0);
             tag.putLong(TAG_LAST_HIT_TIME, 0);
@@ -219,7 +177,6 @@ public class DarkSisterItem extends LegendarySwordItem {
 
         if (stacks <= 0 || level.isClientSide) return;
 
-        // Ambient heat particles get more frequent and heavier the higher the streak climbs
         int interval = Math.max(4, 14 - stacks);
         if (living.tickCount % interval != 0) return;
 
@@ -255,10 +212,6 @@ public class DarkSisterItem extends LegendarySwordItem {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Shared critical-hit sound/particle burst (used by both melee hits and dash pass-throughs)
-    // ---------------------------------------------------------------
-
     public static void playCritEffects(Level level, LivingEntity attacker, LivingEntity target) {
         level.playSound(null, attacker.blockPosition(), SoundEvents.PLAYER_ATTACK_CRIT, SoundSource.PLAYERS, 1.0f, 0.9f);
         level.playSound(null, attacker.blockPosition(), SoundEvents.LAVA_POP, SoundSource.PLAYERS, 0.5f, 1.3f);
@@ -271,15 +224,10 @@ public class DarkSisterItem extends LegendarySwordItem {
         }
     }
 
-    // ---------------------------------------------------------------
-    // Blade tint - drives the layer1 "heat overlay" texture from cool steel to white-hot
-    // ---------------------------------------------------------------
-
-    /** Registered client-side against RegisterColorHandlersEvent.Item; see Valyrainsteel.ClientModEvents. */
     public static int getColor(ItemStack stack, int tintIndex) {
-        if (tintIndex != 1) return 0xFFFFFF; // layer0 (base steel) is never tinted
+        if (tintIndex != 1) return 0xFFFFFF;
 
-        float heat = Mth.clamp(getCurrentCritChance(stack) / 0.5f, 0f, 1f); // 0 = cold, 1 = max streak
+        float heat = Mth.clamp(getCurrentCritChance(stack) / 0.5f, 0f, 1f);
         return heatColor(heat);
     }
 

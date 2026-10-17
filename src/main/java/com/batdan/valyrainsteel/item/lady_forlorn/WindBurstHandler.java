@@ -14,39 +14,24 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Pure gameplay math for the wind burst. No particles/sounds in here on purpose - those are handled
- * separately per-client (see LadyForlonItem + LadyForlonEffects) so this class only has to worry
- * about physics, and only ever runs on the server.
- */
 public final class WindBurstHandler {
 
-    // How far ahead we check for a wall/ground before deciding this is a "bounce" instead of an
-    // open-air blast. Also doubles as the ray length.
     private static final double WALL_CHECK_RANGE = 4.5;
 
-    // Open-air cone blast
     private static final double CONE_RANGE_MIN = 6.0;
     private static final double CONE_RANGE_MAX = 10.0;
     private static final double CONE_HALF_ANGLE_DEGREES = 40.0;
     private static final double CONE_BASE_POWER = 12.0;
     private static final double CONE_UPWARD_BOOST = 3.5;
 
-    // Wall bounce (launches the caster instead)
     private static final double WALL_BASE_POWER = 12.0;
     private static final double WALL_UPWARD_BOOST = 4.0;
 
-    // Small backward kick applied either way, just for impact feedback
     private static final double RECOIL_STRENGTH = 0.12;
 
     private WindBurstHandler() {
     }
 
-    /**
-     * Shared, deterministic raytrace along the player's look direction. Client and server both call
-     * this with the same inputs so they independently agree on wall-bounce vs. open-air without any
-     * networking.
-     */
     public static BlockHitResult traceLookHit(Level level, Player player) {
         Vec3 eyePos = player.getEyePosition();
         Vec3 traceEnd = eyePos.add(player.getLookAngle().scale(WALL_CHECK_RANGE));
@@ -58,7 +43,6 @@ public final class WindBurstHandler {
         return hit.getType() == HitResult.Type.BLOCK;
     }
 
-    /** Server-only. Applies knockback to the caster (wall bounce) or nearby entities (cone blast). */
     public static void applyPhysics(ServerLevel level, ServerPlayer player, BlockHitResult hit, float chargeFraction) {
         chargeFraction = Mth.clamp(chargeFraction, 0F, 1F);
 
@@ -68,7 +52,6 @@ public final class WindBurstHandler {
             coneBlast(level, player, chargeFraction);
         }
 
-        // Small recoil kick regardless of mode, opposite the look direction, for extra "oomph".
         Vec3 look = player.getLookAngle();
         Vec3 current = player.getDeltaMovement();
         player.setDeltaMovement(
@@ -83,7 +66,7 @@ public final class WindBurstHandler {
         Vec3 hitPos = hit.getLocation();
         Vec3 eyePos = player.getEyePosition();
         double distance = eyePos.distanceTo(hitPos);
-        double proximity = 1.0 - Mth.clamp(distance / WALL_CHECK_RANGE, 0.0, 1.0); // closer = harder launch
+        double proximity = 1.0 - Mth.clamp(distance / WALL_CHECK_RANGE, 0.0, 1.0);
 
         Vec3 away = eyePos.subtract(hitPos);
         if (away.lengthSqr() < 1.0E-6) {
@@ -102,8 +85,6 @@ public final class WindBurstHandler {
 
         player.setDeltaMovement(newVelocity);
         player.hurtMarked = true;
-        // The soft-landing passive (LadyForlonEvents) zeroes the fall damage anyway, this just
-        // keeps a mid-charge fall distance from adding a weird extra jolt to the bounce itself.
         player.fallDistance = 0;
     }
 
@@ -127,10 +108,10 @@ public final class WindBurstHandler {
 
             Vec3 direction = toTarget.scale(1.0 / distance);
             if (direction.dot(look) < cosHalfAngle) {
-                continue; // outside the cone
+                continue;
             }
 
-            double falloff = 1.0 - (distance / range); // 1 = right in front of the blade, 0 = at max range
+            double falloff = 1.0 - (distance / range);
             double strength = CONE_BASE_POWER * chargeFraction * (0.35 + 0.65 * falloff);
 
             Vec3 push = direction.scale(strength);

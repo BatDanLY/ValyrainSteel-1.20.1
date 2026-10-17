@@ -7,19 +7,7 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
-/**
- * EXAMPLE registration - fold into your existing sound registry class if you have one.
- * Needs matching entries in src/main/resources/assets/valyrainsteel/sounds.json, e.g.:
- *
- * {
- *   "lady_forlon.charge": { "sounds": [ "valyrainsteel:item/lady_forlon/charge" ] },
- *   "lady_forlon.release": { "sounds": [ "valyrainsteel:item/lady_forlon/release" ] },
- *   "lady_forlon.land": { "sounds": [ "valyrainsteel:item/lady_forlon/land" ] }
- * }
- *
- * with matching .ogg files under assets/valyrainsteel/sounds/item/lady_forlon/.
- */
-public final class ModSounds {
+class ModSounds {
     public static final DeferredRegister<SoundEvent> SOUNDS =
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, Valyrainsteel.MODID);
 

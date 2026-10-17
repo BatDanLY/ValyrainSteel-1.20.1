@@ -6,7 +6,7 @@ import net.minecraftforge.event.entity.living.LivingFallEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-// TODO: replace "valyrainsteel" with your actual @Mod modid constant if it differs.
+
 @Mod.EventBusSubscriber(modid = "valyrainsteel", bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class LadyForlornEvents {
 
@@ -27,8 +27,6 @@ public final class LadyForlornEvents {
             LadyForlornEffects.spawnLandingEffects(entity);
         }
 
-        // Full negation rather than event.setCanceled(true) - this still lets any other fall-damage
-        // hooks (other mods, datapacks, etc.) run their own logic without conflicting with ours.
         event.setDamageMultiplier(0.0F);
     }
 }

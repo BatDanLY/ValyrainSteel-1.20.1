@@ -23,13 +23,11 @@ public class ShockedEffect extends MobEffect {
     @Override
     public void applyEffectTick(LivingEntity entity, int amplifier) {
 
-        // Completely stop movement
         entity.setDeltaMovement(Vec3.ZERO);
         entity.hurtMarked = true;
 
         if (!entity.level().isClientSide) {
 
-            // Half heart every 10 ticks
             if (entity.tickCount % 10 == 0) {
 
                 entity.hurt(

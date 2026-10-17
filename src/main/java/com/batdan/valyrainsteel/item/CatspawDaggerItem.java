@@ -40,7 +40,7 @@ public class CatspawDaggerItem extends LegendarySwordItem {
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.SPEAR; // or BOW if you prefer
+        return UseAnim.SPEAR;
     }
 
     @Override

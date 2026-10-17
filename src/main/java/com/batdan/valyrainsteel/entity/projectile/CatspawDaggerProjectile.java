@@ -23,17 +23,14 @@ public class CatspawDaggerProjectile extends SpinProjectile {
     public boolean inGround = false;
     private int groundTicks = 0;
 
-    // Used by Forge networking
     public CatspawDaggerProjectile(EntityType<? extends CatspawDaggerProjectile> type, Level level) {
         super(type, level);
     }
 
-    // Used when the server spawns it
     public CatspawDaggerProjectile(Level level, LivingEntity thrower) {
         super(ModEntities.CATSPAW_DAGGER.get(), thrower, level);
     }
 
-    // Used by client spawn packet
     public CatspawDaggerProjectile(PlayMessages.SpawnEntity packet, Level level) {
         this(ModEntities.CATSPAW_DAGGER.get(), level);
     }
@@ -88,14 +85,6 @@ public class CatspawDaggerProjectile extends SpinProjectile {
             setXRot(-pitch);
         }
 
-
-        // Rotate while flying
-        if (!inGround) {
-            //setYRot(getYRot() + 35F);
-            //updateRotationFromVelocity();
-        }
-
-        // Tiny smoke trail
         if (level().isClientSide) {
             level().addParticle(
                     ParticleTypes.SMOKE,
@@ -108,7 +97,6 @@ public class CatspawDaggerProjectile extends SpinProjectile {
             );
         }
 
-        // Despawn after 2 seconds in wall
         if (inGround) {
             groundTicks++;
 

@@ -14,8 +14,6 @@ public class ModCreativeModeTabs {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS =
             DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Valyrainsteel.MODID);
 
-
-    // Weapons, tools and armor tab
     public static final RegistryObject<CreativeModeTab> VALYRIAN_STEEL_EQUIPMENT_TAB =
             CREATIVE_MODE_TABS.register("valyrian_steel_equipment_tab",
                     () -> CreativeModeTab.builder()
@@ -88,7 +86,6 @@ public class ModCreativeModeTabs {
                             .build());
 
 
-    // Materials and crafting items tab
     public static final RegistryObject<CreativeModeTab> VALYRIAN_STEEL_MATERIALS_TAB =
             CREATIVE_MODE_TABS.register("valyrian_steel_materials_tab",
                     () -> CreativeModeTab.builder()

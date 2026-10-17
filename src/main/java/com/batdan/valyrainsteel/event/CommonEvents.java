@@ -28,7 +28,6 @@ public class CommonEvents {
         if (!entity.hasEffect(ModEffects.SHOCKED.get()))
             return;
 
-        // Freeze movement
         entity.setDeltaMovement(Vec3.ZERO);
 
         entity.zza = 0;
@@ -40,7 +39,6 @@ public class CommonEvents {
             mob.getNavigation().stop();
         }
 
-        // CLIENT ONLY PARTICLES
         if (entity.level().isClientSide) {
             spawnLightning(entity);
         }

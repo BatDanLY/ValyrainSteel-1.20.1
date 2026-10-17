@@ -29,16 +29,12 @@ import java.util.Random;
 
 public class LadyForlornItem extends LegendarySwordItem {
 
-    // ---- Active ability tuning ----
-    // getUseDuration() is deliberately huge so the player can hold the charge as long as they like;
-    // MAX_CHARGE_TICKS is our own soft cap that determines when the charge is "full".
     private static final int MAX_USE_DURATION = 72000;
-    private static final int MAX_CHARGE_TICKS = 20 * 2; // 2.0s at full charge, tune to taste
-    private static final float MIN_CHARGE_TO_FIRE = 0.05F; // tap-and-release does basically nothing
+    private static final int MAX_CHARGE_TICKS = 20 * 2;
+    private static final float MIN_CHARGE_TO_FIRE = 0.05F;
 
-    // ---- Passive ability tuning ----
-    private static final double AIR_ACCELERATION = 0.09; // added to horizontal speed per tick while steering in air
-    private static final double AIR_MAX_SPEED = 5.0;    // horizontal speed cap while airborne (roughly 2x sprint)
+    private static final double AIR_ACCELERATION = 0.09;
+    private static final double AIR_MAX_SPEED = 5.0;
     private static final int AGILITY_ACTIVATE_TICKS = 14;
 
     private static final Random RANDOM = new Random();
@@ -49,10 +45,6 @@ public class LadyForlornItem extends LegendarySwordItem {
     public LadyForlornItem(Tier tier, int attackDamageModifier, float attackSpeedModifier, Properties properties) {
         super(tier, attackDamageModifier, attackSpeedModifier, properties);
     }
-
-    // ============================================================
-    //  ACTIVE ABILITY — charge-and-release wind burst
-    // ============================================================
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -68,8 +60,6 @@ public class LadyForlornItem extends LegendarySwordItem {
 
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        // SPEAR keeps the sword held out in front (like a trident aim) instead of the bow's
-        // sideways draw - reads better for "gathering wind in front of the blade".
         return UseAnim.SPEAR;
     }
 
@@ -81,11 +71,6 @@ public class LadyForlornItem extends LegendarySwordItem {
         }
 
         float chargeFraction = getChargeFraction(remainingUseDuration);
-
-        // onUseTick is mirrored client-side for every nearby player watching this entity use the
-        // item (that's how vanilla shows other players charging a bow too) - so gating on
-        // isClientSide here means every observer's own client spawns the swirl locally, with no
-        // networking code required on our part.
         if (level.isClientSide) {
             LadyForlornEffects.spawnChargeParticles(level, player, chargeFraction);
         }
@@ -102,8 +87,6 @@ public class LadyForlornItem extends LegendarySwordItem {
             return;
         }
 
-        // Both sides independently raytrace from the same eye position / look angle, so they agree
-        // on whether this was a wall-bounce or an open-air cone blast without needing to sync it.
         BlockHitResult hit = WindBurstHandler.traceLookHit(level, player);
 
         if (level.isClientSide) {
@@ -121,11 +104,6 @@ public class LadyForlornItem extends LegendarySwordItem {
         return Mth.clamp(chargeTicks / (float) MAX_CHARGE_TICKS, 0F, 1F);
     }
 
-    // ============================================================
-    //  PASSIVE ABILITY — aerial agility
-    //  (soft-landing/no fall damage lives in LadyForlonEvents, since that needs a Forge event)
-    // ============================================================
-
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slot, isSelected);
@@ -134,27 +112,15 @@ public class LadyForlornItem extends LegendarySwordItem {
             return;
         }
 
-        //TrailPointBuilder.create(40).addTrailPoint(TrailPoint())
-
-
-
         applyAerialAgility(player, level);
     }
 
-    /**
-     * Deliberately runs on BOTH logical sides. Client and server compute the exact same boost from
-     * the exact same inputs (xxa/zza/yaw/onGround), so they naturally stay in agreement without any
-     * position-correction jank - this is the same trick used for the local player's normal movement
-     * prediction. Do not gate this with !level.isClientSide.
-     */
     private void applyAerialAgility(Player player, Level level) {
-        // Don't apply while on the ground or in states where air control shouldn't work.
         if (player.onGround() || player.isFallFlying() || player.isInWater() || player.isInLava()) {
             player.getPersistentData().putInt("AirTicks", 0);
             return;
         }
 
-        // Only activate after the player has actually been airborne for a few ticks.
         int airTicks = player.getPersistentData().getInt("AirTicks") + 1;
         player.getPersistentData().putInt("AirTicks", airTicks);
 
@@ -164,7 +130,6 @@ public class LadyForlornItem extends LegendarySwordItem {
 
         Vec3 inputDirection = getWorldSpaceInput(player);
 
-        // No movement input.
         if (inputDirection.lengthSqr() < 1.0E-7) {
             return;
         }
@@ -172,10 +137,8 @@ public class LadyForlornItem extends LegendarySwordItem {
         Vec3 motion = player.getDeltaMovement();
         Vec3 horizontal = new Vec3(motion.x, 0.0D, motion.z);
 
-        // Speed in the direction the player wants to move.
         double speedAlongInput = horizontal.dot(inputDirection);
 
-        // Only add speed up to AIR_MAX_SPEED in that direction.
         if (speedAlongInput < AIR_MAX_SPEED) {
             double accel = Math.min(AIR_ACCELERATION, AIR_MAX_SPEED - speedAlongInput);
             horizontal = horizontal.add(inputDirection.scale(accel));
@@ -207,12 +170,6 @@ public class LadyForlornItem extends LegendarySwordItem {
     }
 
 
-
-    /**
-     * Rebuilds the player's raw WASD input (xxa = strafe, zza = forward) as a world-space direction
-     * relative to their yaw - the same math LivingEntity#getInputVector uses internally for travel().
-     * We can't call that method directly (it's protected on Entity), so it's reproduced here.
-     */
     private static Vec3 getWorldSpaceInput(Player player) {
         double strafe = player.xxa;
         double forward = player.zza;

@@ -45,17 +45,14 @@ public class CalamityProjectile extends SpinProjectile {
     private float prevYaw;
     private float prevPitch;
 
-    // Used by Forge networking
     public CalamityProjectile(EntityType<? extends CalamityProjectile> type, Level level) {
         super(type, level);
     }
 
-    // Used when the server spawns it
     public CalamityProjectile(Level level, LivingEntity thrower) {
         super(ModEntities.CALAMITY.get(), thrower, level);
     }
 
-    // Used by client spawn packet
     public CalamityProjectile(PlayMessages.SpawnEntity packet, Level level) {
         this(ModEntities.CALAMITY.get(), level);
     }
@@ -129,12 +126,10 @@ public class CalamityProjectile extends SpinProjectile {
 
                 float t = s / (float)samples;
 
-                // Interpolated position
                 double px = Mth.lerp(t, lastPos.x, currentPos.x);
                 double py = Mth.lerp(t, lastPos.y, currentPos.y);
                 double pz = Mth.lerp(t, lastPos.z, currentPos.z);
 
-                // Interpolated rotation
                 float yaw = Mth.rotLerp(t, prevYaw, getYRot());
                 float pitch = Mth.lerp(t, prevPitch, getXRot());
                 float roll = Mth.lerp(t, prevSpin, spin);
@@ -142,7 +137,7 @@ public class CalamityProjectile extends SpinProjectile {
                 Quaternionf rotation = new Quaternionf()
                         .rotateY((float) Math.toRadians(yaw))
                         .rotateX((float) Math.toRadians(pitch))
-                        .rotateX((float) Math.toRadians(roll)); // Change to rotateZ if your model rolls around Z
+                        .rotateX((float) Math.toRadians(roll));
 
                 Vector3f top = new Vector3f(0F, 0.75F, 0F);
                 Vector3f bottom = new Vector3f(0F, -0.75F, 0F);
@@ -275,7 +270,6 @@ public class CalamityProjectile extends SpinProjectile {
                 1F
         );
 
-        // Tell the client to spawn the fancy particles.
         level().broadcastEntityEvent(this, (byte)15);
 
         discard();
@@ -294,7 +288,6 @@ public class CalamityProjectile extends SpinProjectile {
 
         Vec3 center = position();
 
-        // Charge sparks
         for (int i = 0; i < 20; i++) {
 
             Vec3 offset = randomDirection().scale(1.5);
@@ -321,7 +314,6 @@ public class CalamityProjectile extends SpinProjectile {
                     );
         }
 
-        // Branching arcs
         for (int branch = 0; branch < 24; branch++) {
 
             Vec3 dir = randomDirection();
@@ -352,7 +344,6 @@ public class CalamityProjectile extends SpinProjectile {
             }
         }
 
-        // Central flash
         WorldParticleBuilder.create(LodestoneParticleRegistry.WISP_PARTICLE)
                 .setLifetime(6)
                 .setScaleData(GenericParticleData.create(3.5F, 0F).build())
@@ -365,7 +356,6 @@ public class CalamityProjectile extends SpinProjectile {
                 .enableNoClip()
                 .spawn(level(), center.x, center.y, center.z);
 
-        // Outward sparks
         for (int i = 0; i < 120; i++) {
 
             Vec3 dir = randomDirection();

@@ -39,7 +39,6 @@ public class TreecapEvent {
         if (!level.getBlockState(start).is(BlockTags.LOGS))
             return;
 
-        // Only trigger on the bottom log
         if (level.getBlockState(start.below()).is(BlockTags.LOGS))
             return;
 
@@ -47,7 +46,7 @@ public class TreecapEvent {
 
         collectLogs(level, start, visited);
 
-        visited.remove(start); // vanilla already broke this one
+        visited.remove(start);
 
         for (BlockPos pos : visited) {
 

@@ -22,8 +22,6 @@ public abstract class SpinProjectile extends ThrowableItemProjectile {
         super(p_37442_, p_37443_);
     }
 
-    // constructors...
-
     @Override
     public void tick() {
         super.tick();
