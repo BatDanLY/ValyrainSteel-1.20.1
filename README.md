@@ -77,3 +77,7 @@ If you find a bug or have a suggestion, feel free to open an issue on the GitHub
 ---
 
 This is an unofficial fan-made mod inspired by *Game of Thrones* and *House of the Dragon*. It is not affiliated with or endorsed by the rights holders.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
